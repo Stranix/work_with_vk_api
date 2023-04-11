@@ -1,5 +1,8 @@
 import requests
 
+from pathlib import Path
+from api.schemas import UploadPhoto
+
 
 def get_wall_upload_server(group_id: int, token: str) -> str:
     url = 'https://api.vk.com/method/photos.getWallUploadServer'
@@ -19,50 +22,47 @@ def get_wall_upload_server(group_id: int, token: str) -> str:
 
 def upload_photo_to_server(
         upload_url: str,
-        file_name: str
-) -> tuple[int, str, str]:
+        file: Path
+) -> UploadPhoto:
 
-    with open(file_name, 'rb') as file:
-        files = {
-            'photo': file
-        }
-        response = requests.post(upload_url, files=files)
-        response.raise_for_status()
-        vk_api_response = response.json()
+    files = {
+        'photo': file.read_bytes()
+    }
+    response = requests.post(upload_url, files=files)
+    response.raise_for_status()
+    vk_api_response = response.json()
 
-        server = int(vk_api_response['server'])
-        photo = vk_api_response['photo']
-        hash_str = vk_api_response['hash']
-
-    return server, photo, hash_str
+    return UploadPhoto(
+        vk_api_response['server'],
+        vk_api_response['photo'],
+        vk_api_response['hash']
+    )
 
 
 def save_wall_photo(
         group_id: int,
-        server: int,
-        photo: str,
-        hash_str: str,
-        token: str
+        token: str,
+        upload_photo: UploadPhoto
 ) -> tuple[int, int]:
 
     url = 'https://api.vk.com/method/photos.saveWallPhoto'
     data = {
         'group_id': group_id,
-        'server': server,
-        'photo': photo,
-        'hash': hash_str,
+        'server': upload_photo.server_id,
+        'photo': upload_photo.photo,
+        'hash': upload_photo.hash,
         'access_token': token,
         'v': '5.131'
     }
     response = requests.post(url, data=data)
     vk_api_response = response.json()
-    media_id = int(vk_api_response['response'][0]['id'])
-    owner_id = int(vk_api_response['response'][0]['owner_id'])
+    media_id = vk_api_response['response'][0]['id']
+    owner_id = vk_api_response['response'][0]['owner_id']
 
     return media_id, owner_id
 
 
-def wall_post(
+def post_on_wall(
         owner_id: int,
         group_id: int,
         photo_id: int,
