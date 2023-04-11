@@ -6,8 +6,8 @@ from dotenv import load_dotenv
 
 def main():
     load_dotenv()
-    vk_token = os.getenv('VK_ACCESS_TOKEN')
-    vk_group_id = int(os.getenv('VK_GROUP_ID'))
+    vk_token = os.environ['VK_ACCESS_TOKEN']
+    vk_group_id = int(os.environ['VK_GROUP_ID'])
 
     services.create_comics_post_on_vk_group(vk_group_id, vk_token)
 
