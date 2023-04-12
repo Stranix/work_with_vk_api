@@ -13,5 +13,5 @@ class Comic:
 @dataclass
 class UploadPhoto:
     server_id: int
-    photo: str
+    photo: list
     hash: str
