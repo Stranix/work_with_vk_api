@@ -1,11 +1,14 @@
 import requests
 
 from pathlib import Path
-from api.schemas import UploadPhoto
+from api.schemas import UploadPhoto, Comic
 
 
-class TokenExpiredException(Exception):
-    pass
+class VkApiException(Exception):
+
+    def __init__(self, message):
+        self.message = message
+        super().__init__(self.message)
 
 
 def get_wall_upload_server(group_id: int, token: str) -> str:
@@ -27,9 +30,11 @@ def upload_photo_to_server(
         upload_url: str,
         file: Path
 ) -> UploadPhoto:
+
     files = {
-        'photo': file.read_bytes()
+        'photo': (file.name, file.read_bytes())
     }
+
     response = requests.post(upload_url, files=files)
     vk_api_check_err_response(response)
     vk_api_response = response.json()
@@ -86,8 +91,31 @@ def post_on_wall(
     vk_api_check_err_response(response)
 
 
-def vk_api_check_err_response(response: requests.Response) -> bool:
+def vk_api_check_err_response(response: requests.Response):
     response.raise_for_status()
-    if response.json()['error']:
-        raise TokenExpiredException
-    return True
+    if not response.json().get('error'):
+        return
+    error_msg = response.json()['error']['error_msg']
+    raise VkApiException(error_msg)
+
+
+def post_comic_on_group_wall(comic: Comic, vk_group_id: int, vk_token: str):
+    photo_upload_url = get_wall_upload_server(vk_group_id, vk_token)
+    upload_foto_info = upload_photo_to_server(
+        photo_upload_url,
+        comic.file_path
+    )
+
+    media_id, owner_id = save_wall_photo(
+        vk_group_id,
+        vk_token,
+        upload_foto_info
+    )
+
+    post_on_wall(
+        owner_id,
+        vk_group_id,
+        media_id,
+        comic.comment,
+        vk_token
+    )
