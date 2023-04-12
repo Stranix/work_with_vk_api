@@ -14,30 +14,10 @@ def main():
         random_comic_num = api.comics.get_random_comic_num()
         comic = api.comics.get_comic(random_comic_num)
         api.comics.download_comic(comic)
+        api.vk.post_comic_on_group_wall(comic, vk_group_id, vk_token)
 
-        photo_upload_url = api.vk.get_wall_upload_server(vk_group_id, vk_token)
-
-        upload_foto_info = api.vk.upload_photo_to_server(
-            photo_upload_url,
-            comic.file_path
-        )
-
-        media_id, owner_id = api.vk.save_wall_photo(
-            vk_group_id,
-            vk_token,
-            upload_foto_info
-        )
-
-        api.vk.post_on_wall(
-            owner_id,
-            vk_group_id,
-            media_id,
-            comic.comment,
-            vk_token
-        )
-
-    except api.vk.TokenExpiredException:
-        print('Истек срок действия токена. Необходимо обновить')
+    except api.vk.VkApiException as vk_api_err:
+        print(vk_api_err.message)
 
     except Exception as err:
         print(f'Непредвидимая ошибка {err}, {type(err)}')
