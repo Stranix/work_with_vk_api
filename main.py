@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 
 
 def main():
+    comic = ''
     try:
         load_dotenv()
         vk_token = os.environ['VK_ACCESS_TOKEN']
@@ -12,9 +13,7 @@ def main():
 
         random_comic_num = api.comics.get_random_comic_num()
         comic = api.comics.get_comic(random_comic_num)
-        if not api.comics.download_comic(comic):
-            os.remove(comic.file_path)
-            raise ValueError
+        api.comics.download_comic(comic)
 
         photo_upload_url = api.vk.get_wall_upload_server(vk_group_id, vk_token)
 
@@ -37,9 +36,15 @@ def main():
             vk_token
         )
 
-        os.remove(comic.file_path)
+    except api.vk.TokenExpiredException:
+        print('Истек срок действия токена. Необходимо обновить')
+
     except Exception as err:
         print(f'Непредвидимая ошибка {err}, {type(err)}')
+
+    finally:
+        if comic and os.path.isfile(comic.file_path):
+            os.remove(comic.file_path)
 
 
 if __name__ == '__main__':

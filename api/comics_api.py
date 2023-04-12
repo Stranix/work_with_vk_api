@@ -27,8 +27,7 @@ def get_random_comic_num() -> int:
     return random_comic_num
 
 
-def download_comic(comic: Comic) -> bool:
+def download_comic(comic: Comic):
     response = requests.get(comic.image_url)
     response.raise_for_status()
     comic.file_path.write_bytes(response.content)
-    return True
