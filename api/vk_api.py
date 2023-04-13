@@ -1,3 +1,5 @@
+from typing import Any
+
 import requests
 
 from pathlib import Path
@@ -19,8 +21,8 @@ def get_wall_upload_server(group_id: int, token: str) -> str:
         'v': '5.131'
     }
     response = requests.get(url, params)
-    vk_api_check_err_response(response)
-    vk_api_response = response.json()
+    vk_api_response = check_vk_api_err_response(response)
+
     upload_url = vk_api_response['response']['upload_url']
 
     return upload_url
@@ -36,8 +38,7 @@ def upload_photo_to_server(
     }
 
     response = requests.post(upload_url, files=files)
-    vk_api_check_err_response(response)
-    vk_api_response = response.json()
+    vk_api_response = check_vk_api_err_response(response)
 
     return UploadPhoto(
         vk_api_response['server'],
@@ -56,13 +57,14 @@ def save_wall_photo(
         'group_id': group_id,
         'server': upload_photo.server_id,
         'photo': upload_photo.photo,
-        'hash': upload_photo.hash,
+        'hash': upload_photo.hash_upload,
         'access_token': token,
         'v': '5.131'
     }
+
     response = requests.post(url, data=data)
-    vk_api_check_err_response(response)
-    vk_api_response = response.json()
+    vk_api_response = check_vk_api_err_response(response)
+
     media_id = vk_api_response['response'][0]['id']
     owner_id = vk_api_response['response'][0]['owner_id']
 
@@ -88,14 +90,15 @@ def post_on_wall(
 
     }
     response = requests.post(url, data)
-    vk_api_check_err_response(response)
+    check_vk_api_err_response(response)
 
 
-def vk_api_check_err_response(response: requests.Response):
+def check_vk_api_err_response(response: requests.Response) -> Any:
     response.raise_for_status()
-    if not response.json().get('error'):
-        return
-    error_msg = response.json()['error']['error_msg']
+    api_response = response.json()
+    if not api_response.get('error'):
+        return api_response
+    error_msg = api_response['error']['error_msg']
     raise VkApiException(error_msg)
 
 

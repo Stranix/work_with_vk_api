@@ -14,4 +14,4 @@ class Comic:
 class UploadPhoto:
     server_id: int
     photo: list
-    hash: str
+    hash_upload: str

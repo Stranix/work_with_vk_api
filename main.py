@@ -2,6 +2,7 @@ import os
 import api
 
 from dotenv import load_dotenv
+from requests.exceptions import HTTPError
 
 
 def main():
@@ -19,8 +20,8 @@ def main():
     except api.vk.VkApiException as vk_api_err:
         print(vk_api_err.message)
 
-    except Exception as err:
-        print(f'Непредвидимая ошибка {err}, {type(err)}')
+    except HTTPError as err:
+        print(err.args)
 
     finally:
         if comic and os.path.isfile(comic.file_path):
